@@ -14,17 +14,21 @@ from .constants import IP
 R = TypeVar("R")
 
 
+DEBUG_QUERIES = bool(os.environ.get("_ConAcc_DEBUG_QUERIES"))
+
+
 async def run_query(
     *args: bytes,
     ip: IP = IP.ANY,
     pool: Optional[bytes] = None,
 ) -> asyncio.subprocess.Process:
     """Launch process to run a query using an HTCondor CLI tool"""
-    extra_args = [b"-pool", pool] if pool is not None else []
+    if pool is not None:
+        args = [args[0], b"-pool", pool, *args[1:]]
+    if DEBUG_QUERIES:
+        print(args, file=sys.stderr)
     return await asyncio.create_subprocess_exec(
-        args[0],
-        *extra_args,
-        *args[1:],
+        *args,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         env={**os.environ, **ip.config_env}
