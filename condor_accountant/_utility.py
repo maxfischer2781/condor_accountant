@@ -37,7 +37,7 @@ class TaskPool:
         self._concurrency = asyncio.Semaphore(max_size)
 
     async def run(self, task: Callable[..., Awaitable[R]], *args, **kwargs) -> R:
-        with self._concurrency:
+        async with self._concurrency:
             return await task(*args, **kwargs)
 
     async def map(
@@ -45,9 +45,11 @@ class TaskPool:
     ) -> AsyncIterable[R]:
         arguments = a.zip(*arg_iters)
         task_queue = collections.deque(
-            asyncio.ensure_future(self.run(__task, *args, **kwargs))
-            async for args, _
-            in a.islice(a.borrow(arguments), self._max_size)
+            [
+                asyncio.ensure_future(self.run(__task, *args, **kwargs))
+                async for args
+                in a.islice(a.borrow(arguments), self._max_size)
+            ]
         )
         try:
             for next_task in task_queue:
