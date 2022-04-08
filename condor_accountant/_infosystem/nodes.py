@@ -19,10 +19,12 @@ class Node(NamedTuple):
         cls, __type: Subsystem, pool: Optional[bytes] = None
     ) -> "Iterator[Node]":
         """Query the `pool` for all nodes of a specific type"""
+        constraints = [] if __type != Subsystem.STARTD else [b'-constraint', b'SlotType=!="Dynamic"']
         async with run_query(
             *[b"condor_status", b"-subsystem", __type.name.lower().encode()],
             *[b"-format", b"%s\t", b"Name", b"-format", b"%s\t", b"Machine"],
             *[b"-format", b"%s\n", b"MyAddress"],
+            *constraints,
             pool=pool,
         ) as condor_status:
             async for line in a.map(bytes.strip, condor_status.stdout):
