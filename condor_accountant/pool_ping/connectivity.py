@@ -85,7 +85,7 @@ async def _ping_host(
             except AttributeError:
                 try:
                     level, identity = FAIL_PATTERN.match(line)[1], None
-                except AttributeError:
+                except TypeError:
                     print("failed to parse condor_ping", line, file=sys.stderr)
                     continue
             authentications[AccessLevel[level.decode()]] = identity
