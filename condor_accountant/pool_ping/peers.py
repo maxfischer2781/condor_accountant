@@ -2,11 +2,11 @@
 Test the connectivity to other nodes in the pool which are of interest to this node
 """
 from typing import Optional
-import asyncio
 
 from .connectivity import ping_nodes
 from ..constants import Subsystem, AccessLevel, IP
 from .._infosystem import configuration
+from .._utility import asyncio_run
 
 # https://htcondor.readthedocs.io/en/lts/admin-manual/security.html#access-level-descriptions
 DAEMON_PEERS = {
@@ -56,7 +56,7 @@ async def test_peers(timeout: float = 5.0, config_root: Optional[bytes] = None):
 
 
 def main():
-    asyncio.run(test_peers())
+    asyncio_run(test_peers())
 
 
 if __name__ == "__main__":
