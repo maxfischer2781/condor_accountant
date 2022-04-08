@@ -5,7 +5,7 @@ from .._utility import run_query
 from ..constants import Subsystem
 
 
-LIST_SEP_PATTERN = re.compile(b"[, ]*")
+LIST_SEP_PATTERN = re.compile(b"[, ]+")
 
 
 async def daemons(config_root: Optional[bytes] = None) -> "set[Subsystem]":
