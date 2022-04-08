@@ -6,6 +6,8 @@ import collections
 import sys
 import inspect
 
+import asyncstdlib as a
+
 from .constants import IP
 
 
@@ -41,19 +43,21 @@ class TaskPool:
     async def map(
         self, __task: Callable[..., Awaitable[R]], *arg_iters, **kwargs
     ) -> AsyncIterable[R]:
-        arguments = zip(*arg_iters)
+        arguments = a.zip(*arg_iters)
         task_queue = collections.deque(
             asyncio.ensure_future(self.run(__task, *args, **kwargs))
-            for args, _
-            in zip(arguments, range(self._max_size))
+            async for args, _
+            in a.zip(arguments, range(self._max_size))
         )
         try:
             for next_task in task_queue:
                 yield await next_task
                 task_queue.append(
-                    asyncio.ensure_future(self.run(__task, *next(arguments), **kwargs))
+                    asyncio.ensure_future(
+                        self.run(__task, *(await a.anext(arguments)), **kwargs)
+                    )
                 )
-        except StopIteration:
+        except StopAsyncIteration:
             pass
         for next_task in task_queue:
             yield await next_task
