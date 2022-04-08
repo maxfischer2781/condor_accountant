@@ -14,7 +14,7 @@ from .constants import IP
 R = TypeVar("R")
 
 
-DEBUG_QUERIES = bool(os.environ.get("_ConAcc_DEBUG_QUERIES"))
+DEBUG_QUERIES = os.environ.get("_ConAcc_DEBUG_QUERIES").strip()
 
 
 async def run_query(
@@ -25,7 +25,7 @@ async def run_query(
     """Launch process to run a query using an HTCondor CLI tool"""
     if pool is not None:
         args = [args[0], b"-pool", pool, *args[1:]]
-    if DEBUG_QUERIES:
+    if DEBUG_QUERIES.lower() == "true" or DEBUG_QUERIES.encode() == args[0]:
         print(args, file=sys.stderr)
     return await asyncio.create_subprocess_exec(
         *args,
