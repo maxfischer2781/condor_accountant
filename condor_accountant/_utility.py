@@ -52,8 +52,8 @@ class TaskPool:
             ]
         )
         try:
-            for next_task in task_queue:
-                yield await next_task
+            while task_queue:
+                yield await task_queue.popleft()
                 task_queue.append(
                     asyncio.ensure_future(
                         self.run(__task, *(await a.anext(arguments)), **kwargs)
