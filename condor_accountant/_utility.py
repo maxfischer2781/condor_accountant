@@ -1,4 +1,4 @@
-from typing import Optional, Callable, TypeVar, Awaitable, AsyncIterable
+from typing import Optional, Callable, TypeVar, Awaitable, AsyncIterable, AsyncGenerator
 import asyncio
 import subprocess
 import os
@@ -22,7 +22,7 @@ async def run_query(
     *args: bytes,
     ip: IP = IP.ANY,
     pool: Optional[bytes] = None,
-) -> asyncio.subprocess.Process:
+) -> AsyncGenerator[asyncio.subprocess.Process, None]:
     """Launch process to run a query using an HTCondor CLI tool"""
     if pool is not None:
         args = [args[0], b"-pool", pool, *args[1:]]
@@ -35,7 +35,7 @@ async def run_query(
         env={**os.environ, **ip.config_env}
     )
     try:
-        yield
+        yield process
     finally:
         process.kill()
 
