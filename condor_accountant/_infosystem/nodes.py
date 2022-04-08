@@ -28,4 +28,5 @@ class Node(NamedTuple):
         async for line in a.map(bytes.strip, condor_status.stdout):
             if not line:
                 continue
-            yield cls(*line.split(b"\t"))
+            name, machine, raw_type, address = line.split(b"\t")
+            yield cls(name, machine, Subsystem[raw_type.decode()], address)
