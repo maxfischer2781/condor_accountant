@@ -71,7 +71,7 @@ async def _ping_host(
         return {}
     condor_ping = await run_query(
         *[b"condor_ping", b"-type", subsystem.name.encode(), b"-name", name],
-        *(level.name for level in levels),
+        *(level.name.encode() for level in levels),
         ip=ip,
         pool=pool,
     )
