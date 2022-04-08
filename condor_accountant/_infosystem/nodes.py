@@ -22,11 +22,11 @@ class Node(NamedTuple):
         condor_status = await run_query(
             *[b"condor_status", b"-subsystem", __type.name.lower().encode()],
             *[b"-format", b"%s\t", b"Name", b"-format", b"%s\t", b"Machine"],
-            *[b"-format", b"%s\t", b"MyType", b"-format", b"%s\n", b"MyAddress"],
+            *[b"-format", b"%s\n", b"MyAddress"],
             pool=pool,
         )
         async for line in a.map(bytes.strip, condor_status.stdout):
             if not line:
                 continue
-            name, machine, raw_type, address = line.split(b"\t")
-            yield cls(name, machine, Subsystem[raw_type.decode()], address)
+            name, machine, address = line.split(b"\t")
+            yield cls(name, machine, __type, address)
