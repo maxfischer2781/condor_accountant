@@ -47,7 +47,7 @@ class TaskPool:
         task_queue = collections.deque(
             asyncio.ensure_future(self.run(__task, *args, **kwargs))
             async for args, _
-            in a.zip(arguments, range(self._max_size))
+            in a.islice(a.borrow(arguments), self._max_size)
         )
         try:
             for next_task in task_queue:
