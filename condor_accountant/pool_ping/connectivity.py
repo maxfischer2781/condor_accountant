@@ -16,7 +16,7 @@ async def ping_nodes(
 ) -> "dict[str | AccessLevel, list[Node]]":
     """Ping all nodes of a given `subsystem` type, checking access `levels`"""
     nodes = Node.from_pool(subsystem)
-    queries = TaskPool().map(
+    queries = TaskPool(throttle=1/100).map(
         _check_connectivity, nodes, levels=levels, timeout=timeout, ip=ip, pool=pool
     )
     failures = {}
