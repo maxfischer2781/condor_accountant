@@ -16,8 +16,8 @@ async def daemons(config_root: Optional[bytes] = None) -> "set[Subsystem]":
 
 
 async def _query_config(key: bytes, root: Optional[bytes] = None) -> bytes:
-    condor_config_val = await run_query(
+    async with run_query(
         *[b"condor_config_val", key],
         *([b"-root-config", root] if root is not None else []),
-    )
-    return await condor_config_val.stdout.read()
+    ) as condor_config_val:
+        return await condor_config_val.stdout.read()

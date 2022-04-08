@@ -70,23 +70,23 @@ async def _ping_host(
     """
     if not levels:
         return {}
-    condor_ping = await run_query(
+    authentications = {}
+    async with run_query(
         *[b"condor_ping", b"-type", subsystem.name.encode(), b"-name", name],
         *(level.name.encode() for level in levels),
         ip=ip,
         pool=pool,
-    )
-    authentications = {}
-    async for line in condor_ping.stdout:
-        if line.startswith(FAIL_CONNECT):
-            raise ConnectionError
-        try:
-            level, identity = SUCCESS_PATTERN.match(line).groups()
-        except AttributeError:
+    ) as condor_ping:
+        async for line in condor_ping.stdout:
+            if line.startswith(FAIL_CONNECT):
+                raise ConnectionError
             try:
-                level, identity = FAIL_PATTERN.match(line)[1], None
+                level, identity = SUCCESS_PATTERN.match(line).groups()
             except AttributeError:
-                print("failed to parse condor_ping", line, file=sys.stderr)
-                continue
-        authentications[AccessLevel[level.decode()]] = identity
+                try:
+                    level, identity = FAIL_PATTERN.match(line)[1], None
+                except AttributeError:
+                    print("failed to parse condor_ping", line, file=sys.stderr)
+                    continue
+            authentications[AccessLevel[level.decode()]] = identity
     return authentications

@@ -17,6 +17,7 @@ R = TypeVar("R")
 DEBUG_QUERIES = os.environ.get("_ConAcc_DEBUG_QUERIES").strip()
 
 
+@a.contextmanager
 async def run_query(
     *args: bytes,
     ip: IP = IP.ANY,
@@ -27,12 +28,16 @@ async def run_query(
         args = [args[0], b"-pool", pool, *args[1:]]
     if DEBUG_QUERIES.lower() == "true" or DEBUG_QUERIES.encode() == args[0]:
         print(args, file=sys.stderr)
-    return await asyncio.create_subprocess_exec(
+    process = await asyncio.create_subprocess_exec(
         *args,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         env={**os.environ, **ip.config_env}
     )
+    try:
+        yield
+    finally:
+        process.kill()
 
 
 class TaskPool:

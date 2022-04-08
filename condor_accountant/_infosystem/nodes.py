@@ -19,14 +19,14 @@ class Node(NamedTuple):
         cls, __type: Subsystem, pool: Optional[bytes] = None
     ) -> "Iterator[Node]":
         """Query the `pool` for all nodes of a specific type"""
-        condor_status = await run_query(
+        async with run_query(
             *[b"condor_status", b"-subsystem", __type.name.lower().encode()],
             *[b"-format", b"%s\t", b"Name", b"-format", b"%s\t", b"Machine"],
             *[b"-format", b"%s\n", b"MyAddress"],
             pool=pool,
-        )
-        async for line in a.map(bytes.strip, condor_status.stdout):
-            if not line:
-                continue
-            name, machine, address = line.split(b"\t")
-            yield cls(name, machine, __type, address)
+        ) as condor_status:
+            async for line in a.map(bytes.strip, condor_status.stdout):
+                if not line:
+                    continue
+                name, machine, address = line.split(b"\t")
+                yield cls(name, machine, __type, address)
