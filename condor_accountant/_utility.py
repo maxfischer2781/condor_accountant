@@ -32,8 +32,10 @@ async def run_query(
 
 
 class TaskPool:
-    def __init__(self, max_size=os.cpu_count()*16):
+    def __init__(self, max_size=os.cpu_count()*16, throttle=0.0):
+        assert max_size > 0
         self._max_size = max_size
+        self._throttle = throttle
         self._concurrency = asyncio.Semaphore(max_size)
 
     async def run(self, task: Callable[..., Awaitable[R]], *args, **kwargs) -> R:
@@ -44,21 +46,19 @@ class TaskPool:
         self, __task: Callable[..., Awaitable[R]], *arg_iters, **kwargs
     ) -> AsyncIterable[R]:
         arguments = a.zip(*arg_iters)
-        task_queue = collections.deque(
-            [
-                asyncio.ensure_future(self.run(__task, *args, **kwargs))
-                async for args
-                in a.islice(a.borrow(arguments), self._max_size)
-            ]
-        )
+        task_queue = collections.deque()
+        async for args in a.islice(a.borrow(arguments), self._max_size):
+            task_queue.append(asyncio.ensure_future(self.run(__task, *args, **kwargs)))
+            await asyncio.sleep(self._throttle)
         try:
-            while task_queue:
-                yield await task_queue.popleft()
-                task_queue.append(
-                    asyncio.ensure_future(
-                        self.run(__task, *(await a.anext(arguments)), **kwargs)
-                    )
+            # the task_queue cannot be empty since we add a new task for each one done
+            yield await task_queue.popleft()
+            task_queue.append(
+                asyncio.ensure_future(
+                    self.run(__task, *(await a.anext(arguments)), **kwargs)
                 )
+            )
+            await asyncio.sleep(self._throttle)
         except StopAsyncIteration:
             pass
         for next_task in task_queue:
