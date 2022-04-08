@@ -1,3 +1,4 @@
+import sys
 from typing import Collection, Optional
 import asyncio
 import re
@@ -82,6 +83,10 @@ async def _ping_host(
         try:
             level, identity = SUCCESS_PATTERN.match(line).groups()
         except AttributeError:
-            level, identity = FAIL_PATTERN.match(line)[1], None
+            try:
+                level, identity = FAIL_PATTERN.match(line)[1], None
+            except AttributeError:
+                print("failed to parse condor_ping", line, file=sys.stderr)
+                continue
         authentications[AccessLevel[level.decode()]] = identity
     return authentications
