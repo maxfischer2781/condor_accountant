@@ -14,7 +14,7 @@ from .constants import IP
 R = TypeVar("R")
 
 
-DEBUG_QUERIES = os.environ.get("_ConAcc_DEBUG_QUERIES").strip()
+DEBUG_QUERIES = os.environ.get("_ConAcc_DEBUG_QUERIES", "").strip()
 
 
 @a.contextmanager
