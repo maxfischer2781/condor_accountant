@@ -51,7 +51,7 @@ async def test_peers(timeout: float = 5.0, config_root: Optional[bytes] = None):
         for reason, nodes in failures.items():
             print(
                 f"failed {reason if isinstance(reason, str) else reason.name}",
-                *(node.decode(errors='surrogateescape') for node in nodes)
+                *(node.name.decode(errors='surrogateescape') for node in nodes)
             )
 
 

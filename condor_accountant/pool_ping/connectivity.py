@@ -3,7 +3,7 @@ import asyncio
 import re
 
 from ..constants import Subsystem, AccessLevel, IP
-from .._infosystem import nodes as _nodes
+from .._infosystem.nodes import Node
 from .._utility import run_query, TaskPool
 
 
@@ -13,9 +13,9 @@ async def ping_nodes(
     timeout: Optional[float] = None,
     ip: IP = IP.ANY,
     pool: Optional[bytes] = None
-) -> "dict[str | AccessLevel, list[bytes]]":
+) -> "dict[str | AccessLevel, list[Node]]":
     """Ping all nodes of a given `subsystem` type, checking access `levels`"""
-    nodes = _nodes.Node.from_pool(subsystem)
+    nodes = Node.from_pool(subsystem)
     queries = TaskPool().map(
         _check_connectivity, nodes, levels=levels, timeout=timeout, ip=ip, pool=pool
     )
@@ -35,12 +35,12 @@ FAIL_PATTERN = re.compile(rb"^(\w*) failed!")
 
 
 async def _check_connectivity(
-    node: _nodes.Node,
+    node: Node,
     levels: Collection[AccessLevel],
     timeout: float,
     ip: IP = IP.ANY,
     pool: Optional[bytes] = None,
-) -> "tuple[_nodes.Node, bool, set[AccessLevel]]":
+) -> "tuple[Node, bool, set[AccessLevel]]":
     try:
         accesses = await asyncio.wait_for(
             _ping_host(node.name, levels, subsystem=node.type, ip=ip, pool=pool),
@@ -49,7 +49,9 @@ async def _check_connectivity(
     except (ConnectionError, asyncio.TimeoutError):
         return node, False, set()
     else:
-        return node, True, {level for level, identity in accesses if identity is not None}
+        return node, True, {
+            level for level, identity in accesses.items() if identity is not None
+        }
 
 
 async def _ping_host(
