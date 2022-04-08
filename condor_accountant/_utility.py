@@ -23,8 +23,8 @@ async def run_query(
         args[0],
         *extra_args,
         *args[1:],
-        stdin=subprocess.PIPE,
-        stdout=subprocess.STDOUT,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
         env={**os.environ, **ip.config_env}
     )
 
