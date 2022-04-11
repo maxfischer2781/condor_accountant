@@ -72,7 +72,8 @@ async def _ping_host(
         return {}
     authentications = {}
     async with run_query(
-        *[b"condor_ping", b"-type", subsystem.name.encode(), b"-name", name],
+        b"condor_ping",
+        *[b"-type", subsystem.name.encode(), b"-name", name.replace(b'"', rb'\"')],
         *(level.name.encode() for level in levels),
         ip=ip,
         pool=pool,
