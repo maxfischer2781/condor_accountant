@@ -37,10 +37,12 @@ async def run_query(
     try:
         yield process
     finally:
+        # kill process then wait until it has finished
         try:
             process.kill()
         except ProcessLookupError:
             pass
+        await process.communicate()
 
 
 class TaskPool:
