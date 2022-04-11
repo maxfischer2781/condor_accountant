@@ -57,5 +57,5 @@ class IP(enum.Enum):
         if self is IP.ANY:
             return {}
         return {
-            f"_CONDOR_ENABLE_IP{kind.name}": self is kind for kind in (IP.V4, IP.V6)
+            f"_CONDOR_ENABLE_IP{kind.name}": "true" if self is kind else "false" for kind in (IP.V4, IP.V6)
         }
