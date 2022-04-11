@@ -43,16 +43,18 @@ async def required_peers(
 
 async def test_peers(timeout: float = 5.0, config_root: Optional[bytes] = None):
     peers = await required_peers(config_root)
+    ip_versions = await configuration.ip_versions(config_root)
     for peer, levels in peers.items():
-        failures = await ping_nodes(peer, *levels, timeout=timeout)
-        if not failures:
-            continue
-        print("failed pings: subsystem", peer.name)
-        for reason, nodes in failures.items():
-            print(
-                f"failed {reason if isinstance(reason, str) else reason.name}",
-                *(node.name.decode(errors='surrogateescape') for node in nodes)
-            )
+        for ip in ip_versions:
+            failures = await ping_nodes(peer, *levels, timeout=timeout,  ip=ip)
+            if not failures:
+                continue
+            print("failed pings: subsystem", peer.name, f"[IP{ip.name}]")
+            for reason, nodes in failures.items():
+                print(
+                    f"failed {reason if isinstance(reason, str) else reason.name}",
+                    *(node.name.decode(errors='surrogateescape') for node in nodes)
+                )
 
 
 def main():
