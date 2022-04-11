@@ -1,3 +1,4 @@
+import time
 from typing import Optional, Callable, TypeVar, Awaitable, AsyncIterable, AsyncGenerator
 import asyncio
 import subprocess
@@ -45,15 +46,45 @@ async def run_query(
         await process.communicate()
 
 
+class Throttle:
+    __slots__ = ("delay", "_next", "_lock")
+
+    def __init__(self, delay: float):
+        self.delay = delay
+        self._next = 0
+        self._lock = asyncio.Lock()
+
+    def __await__(self):
+        if self.delay == 0:
+            return
+        yield from self._lock.acquire()
+        try:
+            now = time.monotonic()
+            if now < self._next:
+                yield from asyncio.sleep(self._next - now)
+                self._next += self.delay
+            else:
+                self._next = now + self.delay
+        finally:
+            self._lock.release()
+
+
 class TaskPool:
+    """
+    Pool of concurrency to run only a bounded number of tasks at once
+
+    :param max_size: upper limit on concurrently running tasks
+    """
     def __init__(self, max_size=os.cpu_count()*16, throttle=0.0):
         assert max_size > 0
         self._max_size = max_size
         self._throttle = throttle
         self._concurrency = asyncio.Semaphore(max_size)
+        self._delay = Throttle(throttle)
 
     async def run(self, task: Callable[..., Awaitable[R]], *args, **kwargs) -> R:
         async with self._concurrency:
+            await self._delay
             return await task(*args, **kwargs)
 
     async def map(
@@ -63,7 +94,6 @@ class TaskPool:
         task_queue = collections.deque()
         async for args in a.islice(a.borrow(arguments), self._max_size):
             task_queue.append(asyncio.ensure_future(self.run(__task, *args, **kwargs)))
-            await asyncio.sleep(self._throttle)
         try:
             # the task_queue cannot be empty since we add a new task for each one done
             yield await task_queue.popleft()
@@ -72,7 +102,6 @@ class TaskPool:
                     self.run(__task, *(await a.anext(arguments)), **kwargs)
                 )
             )
-            await asyncio.sleep(self._throttle)
         except StopAsyncIteration:
             pass
         for next_task in task_queue:
