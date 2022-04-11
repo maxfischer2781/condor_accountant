@@ -44,7 +44,7 @@ async def _check_connectivity(
 ) -> "tuple[Node, bool, set[AccessLevel]]":
     try:
         accesses = await asyncio.wait_for(
-            _ping_host(node.name, levels, subsystem=node.type, ip=ip, pool=pool),
+            _condor_ping(node.address, levels, ip=ip, pool=pool),
             timeout,
         )
     except (ConnectionError, asyncio.TimeoutError):
@@ -55,10 +55,9 @@ async def _check_connectivity(
         }
 
 
-async def _ping_host(
-    name: bytes,
+async def _condor_ping(
+    address: bytes,
     levels: Collection[AccessLevel],
-    subsystem: Subsystem = Subsystem.MASTER,
     ip: IP = IP.ANY,
     pool: Optional[bytes] = None,
 ) -> "dict[AccessLevel, Optional[bytes]]":
@@ -73,7 +72,8 @@ async def _ping_host(
     authentications = {}
     async with run_query(
         b"condor_ping",
-        *[b"-type", subsystem.name.encode(), b"-name", name.replace(b'"', rb'\"')],
+        b"-address",
+        address,
         *(level.name.encode() for level in levels),
         ip=ip,
         pool=pool,
