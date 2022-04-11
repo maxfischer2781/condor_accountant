@@ -21,11 +21,11 @@ async def ping_nodes(
         _check_connectivity, nodes, levels=levels, timeout=timeout, ip=ip, pool=pool
     )
     failures = {}
-    async for node, connected, rejected in queries:
+    async for node, connected, accepted in queries:
         if not connected:
             failures.setdefault("connect", []).append(node)
         else:
-            for level in rejected:
+            for level in set(levels) - accepted:
                 failures.setdefault(level, []).append(node)
     return failures
 
