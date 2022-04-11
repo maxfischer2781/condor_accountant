@@ -44,7 +44,7 @@ async def _check_connectivity(
 ) -> "tuple[Node, bool, set[AccessLevel]]":
     try:
         accesses = await asyncio.wait_for(
-            _ping_host(node.machine, levels, subsystem=node.type, ip=ip, pool=pool),
+            _ping_host(node.name, levels, subsystem=node.type, ip=ip, pool=pool),
             timeout,
         )
     except (ConnectionError, asyncio.TimeoutError):
