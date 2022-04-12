@@ -47,6 +47,11 @@ async def run_query(
 
 
 class Throttle:
+    """
+    Awaitable that limits how often it lets waiters pass
+
+    :param delay: minimum delay between two waiters proceeding
+    """
     __slots__ = ("delay", "_next", "_lock")
 
     def __init__(self, delay: float):
@@ -68,12 +73,19 @@ class Throttle:
         finally:
             self._lock.release()
 
+    async def __aenter__(self):
+        await self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        return False
+
 
 class TaskPool:
     """
     Pool of concurrency to run only a bounded number of tasks at once
 
     :param max_size: upper limit on concurrently running tasks
+    :param throttle: minimum delay between tasks starting
     """
 
     def __init__(self, max_size=os.cpu_count() * 16, throttle=0.0):
@@ -84,8 +96,7 @@ class TaskPool:
         self._delay = Throttle(throttle)
 
     async def run(self, task: Callable[..., Awaitable[R]], *args, **kwargs) -> R:
-        async with self._concurrency:
-            await self._delay
+        async with self._concurrency, self._delay:
             return await task(*args, **kwargs)
 
     async def map(
