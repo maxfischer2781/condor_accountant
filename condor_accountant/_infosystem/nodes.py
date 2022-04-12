@@ -9,17 +9,24 @@ from ..constants import Subsystem
 
 
 class Node(NamedTuple):
-    name: bytes      # Name
-    machine: bytes   # Machine
-    type: Subsystem  # MyType
-    address: bytes   # MyAddress
+    # Name
+    name: bytes
+    # Machine
+    machine: bytes
+    type: Subsystem
+    # MyAddress
+    address: bytes
 
     @classmethod
     async def from_pool(
         cls, __type: Subsystem, pool: Optional[bytes] = None
     ) -> "Iterator[Node]":
         """Query the `pool` for all nodes of a specific type"""
-        constraints = [] if __type != Subsystem.STARTD else [b'-constraint', b'SlotType=!="Dynamic"']
+        constraints = (
+            []
+            if __type != Subsystem.STARTD
+            else [b"-constraint", b'SlotType=!="Dynamic"']
+        )
         async with run_query(
             *[b"condor_status", b"-subsystem", __type.name.lower().encode()],
             *[b"-format", b"%s\t", b"Name", b"-format", b"%s\t", b"Machine"],

@@ -33,7 +33,7 @@ async def run_query(
         *args,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
-        env={**os.environ, **ip.config_env}
+        env={**os.environ, **ip.config_env},
     )
     try:
         yield process
@@ -75,7 +75,8 @@ class TaskPool:
 
     :param max_size: upper limit on concurrently running tasks
     """
-    def __init__(self, max_size=os.cpu_count()*16, throttle=0.0):
+
+    def __init__(self, max_size=os.cpu_count() * 16, throttle=0.0):
         assert max_size > 0
         self._max_size = max_size
         self._throttle = throttle

@@ -19,12 +19,13 @@ async def daemons(config_root: Optional[bytes] = None) -> "set[Subsystem]":
 
 async def ip_versions(config_root: Optional[bytes] = None) -> "list[IP]":
     """The IP addresses (V4, V6) configured to be used on this node"""
-    ipv4, ipv6 = (await _query_config(
-        b"IPV4_ADDRESS", b"IPV6_ADDRESS", root=config_root
-    )).splitlines()
+    ipv4, ipv6 = (
+        await _query_config(b"IPV4_ADDRESS", b"IPV6_ADDRESS", root=config_root)
+    ).splitlines()
     ips = []
     for kind, configured, Address in (
-        (IP.V4, ipv4, ipaddress.IPv4Address), (IP.V6, ipv6, ipaddress.IPv6Address)
+        (IP.V4, ipv4, ipaddress.IPv4Address),
+        (IP.V6, ipv6, ipaddress.IPv6Address),
     ):
         try:
             address = Address(configured.decode().strip())
