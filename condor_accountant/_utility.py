@@ -96,12 +96,20 @@ class TaskPool:
         self._delay = Throttle(throttle)
 
     async def run(self, __task: Callable[..., Awaitable[R]], *args, **kwargs) -> R:
+        """Directly run a single task subject to concurrency and throttle limits"""
         async with self._concurrency, self._delay:
             return await __task(*args, **kwargs)
 
     async def map(
         self, __task: Callable[..., Awaitable[R]], *arg_iters, **kwargs
     ) -> AsyncIterable[R]:
+        """
+        Like :py:func:`map` but running multiple tasks concurrently
+
+        Returns an async iterator that awaits the function for every argument tuple
+        from `arg_iters`, yielding the results in-order. When `kwargs` are given,
+        they are passed completely to each invocation of the function.
+        """
         arguments = a.zip(*arg_iters)
         task_queue = collections.deque()
         async for args in a.islice(a.borrow(arguments), self._max_size):
