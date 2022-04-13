@@ -42,6 +42,7 @@ async def required_peers(
 
 
 async def test_peers(timeout: float = 5.0, config_root: Optional[bytes] = None):
+    """Test and report condor_ping'ing all peers of the current node"""
     peers = await required_peers(config_root)
     ip_versions = await configuration.ip_versions(config_root)
     for peer, levels in peers.items():

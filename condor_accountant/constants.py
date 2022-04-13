@@ -54,6 +54,7 @@ class IP(enum.Enum):
 
     @property
     def config_env(self) -> Dict[str, str]:
+        """partial process environment to configure HTCondor with this IP version"""
         if self is IP.ANY:
             return {}
         return {

@@ -9,6 +9,7 @@ from ..constants import Subsystem
 
 
 class Node(NamedTuple):
+    """Representation of an HTCondor node of a specific type"""
     # Name
     name: bytes
     # Machine
