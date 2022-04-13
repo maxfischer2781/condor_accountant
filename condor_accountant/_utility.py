@@ -95,9 +95,9 @@ class TaskPool:
         self._concurrency = asyncio.Semaphore(max_size)
         self._delay = Throttle(throttle)
 
-    async def run(self, task: Callable[..., Awaitable[R]], *args, **kwargs) -> R:
+    async def run(self, __task: Callable[..., Awaitable[R]], *args, **kwargs) -> R:
         async with self._concurrency, self._delay:
-            return await task(*args, **kwargs)
+            return await __task(*args, **kwargs)
 
     async def map(
         self, __task: Callable[..., Awaitable[R]], *arg_iters, **kwargs
