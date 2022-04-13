@@ -100,6 +100,14 @@ class TaskPool:
         async with self._concurrency, self._delay:
             return await __task(*args, **kwargs)
 
+    def submit(
+        self, __task: Callable[..., Awaitable[R]], *args, **kwargs
+    ) -> "asyncio.Future[R]":
+        """
+        Concurrently run a single task subject to concurrency and throttle limits
+        """
+        return asyncio.ensure_future(self.run(__task, *args, **kwargs))
+
     async def map(
         self, __task: Callable[..., Awaitable[R]], *arg_iters, **kwargs
     ) -> AsyncIterable[R]:
