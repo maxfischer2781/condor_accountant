@@ -1,0 +1,44 @@
+[build-system]
+requires = ["flit_core"]
+build-backend = "flit_core.buildapi"
+
+[project]
+dynamic = ["version", "description"]
+name = "condor-accountant"
+maintainers = [
+    {name = "Max Fischer", email = "maxfischer2781@gmail.com"},
+]
+readme = "README.md"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3 :: Only",
+]
+license = {"file" = "LICENSE"}
+keywords = ["htcondor"]
+requires-python = "~=3.6"
+dependencies = [
+    "asyncstdlib",
+    "typing_extensions",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "flake8",
+    "flake8-bugbear",
+    "black; implementation_name=='cpython'",
+    "coverage",
+    "pytest-cov",
+    "flake8-2020",
+    "mypy; implementation_name=='cpython'",
+]
+doc = ["sphinx"]
+
+[project.urls]
+Documentation = "https://condor_accountant.readthedocs.io/"
+Source = "https://github.com/maxfischer2781/condor_accountant"
+
+[tool.flit.module]
+name = "condor_accountant"
