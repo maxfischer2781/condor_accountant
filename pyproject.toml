@@ -40,5 +40,8 @@ doc = ["sphinx"]
 Documentation = "https://condor_accountant.readthedocs.io/"
 Source = "https://github.com/maxfischer2781/condor_accountant"
 
+[project.scripts]
+condor_accountant = "condor_accountant._cli:main"
+
 [tool.flit.module]
 name = "condor_accountant"
