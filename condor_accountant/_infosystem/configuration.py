@@ -14,7 +14,11 @@ async def daemons(config_root: Optional[bytes] = None) -> "set[Subsystem]":
     daemon_names = LIST_SEP_PATTERN.split(
         (await _query_config(b"DAEMON_LIST", root=config_root)).strip()
     )
-    return {Subsystem[name.decode()] for name in daemon_names if name}
+    return {
+        Subsystem[name]
+        for name in map(bytes.decode, daemon_names)
+        if name in Subsystem.__members__
+    }
 
 
 async def ip_versions(config_root: Optional[bytes] = None) -> "list[IP]":
