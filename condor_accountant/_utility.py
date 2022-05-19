@@ -46,6 +46,10 @@ async def run_query(
         await process.communicate()
 
 
+class ToolOutputUnexpected(Warning):
+    pass
+
+
 class Throttle:
     """
     Awaitable that limits how often it lets waiters pass

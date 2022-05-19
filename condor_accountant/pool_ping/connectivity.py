@@ -2,10 +2,11 @@ from typing import Collection, Optional
 import sys
 import asyncio
 import re
+import warnings
 
 from ..constants import Subsystem, AccessLevel, IP
 from .._infosystem.nodes import Node
-from .._utility import run_query, TaskPool
+from .._utility import run_query, TaskPool, ToolOutputUnexpected
 
 
 async def ping_nodes(
@@ -89,7 +90,7 @@ async def _condor_ping(
                 try:
                     level, identity = FAIL_PATTERN.match(line)[1], None
                 except TypeError:
-                    print("failed to parse condor_ping", line, file=sys.stderr)
+                    warnings.warn(ToolOutputUnexpected(f"condor_ping {line!r}"))
                     continue
             authentications[AccessLevel[level.decode()]] = identity
     return authentications
