@@ -1,5 +1,5 @@
-import sys
 from typing import Collection, Optional
+import sys
 import asyncio
 import re
 
