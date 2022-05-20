@@ -133,6 +133,8 @@ class TaskPool:
         task_queue = collections.deque()
         async for args in a.islice(a.borrow(arguments), self._max_size):
             task_queue.append(asyncio.ensure_future(self.run(__task, *args, **kwargs)))
+        if not task_queue:
+            return
         try:
             # the task_queue cannot be empty since we add a new task for each one done
             yield await task_queue.popleft()
