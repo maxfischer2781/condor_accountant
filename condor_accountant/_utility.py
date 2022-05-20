@@ -46,8 +46,15 @@ async def run_query(
         await process.communicate()
 
 
-class ToolOutputUnexpected(Warning):
-    pass
+# 'warnings.warn' gets reset whenever we start a subprocess
+# so let's reinvent the wheel...
+def debug(*messages, sep=" ", once=True, _registry=set()):
+    """Emit a debug message"""
+    message = sep.join(map(str, messages))
+    if once and message in _registry:
+        return
+    _registry.add(message)
+    print(message, file=sys.stderr)
 
 
 class Throttle:

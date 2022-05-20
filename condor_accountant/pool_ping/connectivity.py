@@ -1,12 +1,11 @@
 from typing import Collection, Optional
-import sys
 import asyncio
 import re
 import warnings
 
 from ..constants import Subsystem, AccessLevel, IP
 from .._infosystem.nodes import Node
-from .._utility import run_query, TaskPool, ToolOutputUnexpected
+from .._utility import run_query, TaskPool, debug
 
 
 async def ping_nodes(
@@ -45,8 +44,7 @@ async def _check_connectivity(
 ) -> "tuple[Node, bool, set[AccessLevel]]":
     try:
         accesses = await asyncio.wait_for(
-            _condor_ping(node.address, levels, ip=ip, pool=pool),
-            timeout,
+            _condor_ping(node.address, levels, ip=ip, pool=pool), timeout
         )
     except (ConnectionError, asyncio.TimeoutError):
         return node, False, set()
@@ -90,7 +88,7 @@ async def _condor_ping(
                 try:
                     level, identity = FAIL_PATTERN.match(line)[1], None
                 except TypeError:
-                    warnings.warn(ToolOutputUnexpected(f"condor_ping {line!r}"))
+                    debug("'condor_ping' output unexpected:", repr(line))
                     continue
             authentications[AccessLevel[level.decode()]] = identity
     return authentications
