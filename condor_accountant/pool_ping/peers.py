@@ -80,12 +80,14 @@ class PingPeersReport:
                 "ip": self.ip.name,
                 "subsystem": self.subsystem.name,
                 "successes": {
-                    level.name: sorted(node.name for node in peer_nodes)
+                    level.name: sorted(
+                        n.name.decode(errors="surrogateescape") for n in peer_nodes
+                    )
                     for level, peer_nodes in self.successes.items()
                 },
                 "failures": {
                     getattr(level, "name", level): sorted(
-                        node.name for node in peer_nodes
+                        n.name.decode(errors="surrogateescape") for n in peer_nodes
                     )
                     for level, peer_nodes in self.successes.items()
                 },
