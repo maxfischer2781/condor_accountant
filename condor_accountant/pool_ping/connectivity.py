@@ -1,7 +1,6 @@
 from typing import Collection, Optional
 import asyncio
 import re
-import warnings
 
 from ..constants import Subsystem, AccessLevel, IP
 from .._infosystem.nodes import Node
@@ -17,7 +16,7 @@ async def ping_nodes(
 ) -> "dict[str | AccessLevel, list[Node]]":
     """Ping all nodes of a given `subsystem` type, checking access `levels`"""
     nodes = Node.from_pool(subsystem)
-    queries = TaskPool(throttle=1 / 100).map(
+    queries = TaskPool(max_size=64, throttle=1 / 128).map(
         _check_connectivity, nodes, levels=levels, timeout=timeout, ip=ip, pool=pool
     )
     failures = {}
