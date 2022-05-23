@@ -89,7 +89,7 @@ class PingPeersReport:
                     getattr(level, "name", level): sorted(
                         n.name.decode(errors="surrogateescape") for n in peer_nodes
                     )
-                    for level, peer_nodes in self.successes.items()
+                    for level, peer_nodes in self.failures.items()
                 },
             }
 
