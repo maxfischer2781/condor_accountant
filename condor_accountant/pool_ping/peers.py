@@ -63,7 +63,7 @@ class PingPeersReport:
             if data[key]:
                 parts.append(head)
                 parts.extend(
-                    f"{level}: {','.join(peer_nodes)}"
+                    f"{level}: {', '.join(peer_nodes)}"
                     for level, peer_nodes
                     in data[key].items()
                 )
@@ -81,13 +81,13 @@ class PingPeersReport:
                 "subsystem": self.subsystem.name,
                 "successes": {
                     level.name: sorted(
-                        n.name.decode(errors="surrogateescape") for n in peer_nodes
+                        n.machine.decode(errors="surrogateescape") for n in peer_nodes
                     )
                     for level, peer_nodes in self.successes.items()
                 },
                 "failures": {
                     getattr(level, "name", level): sorted(
-                        n.name.decode(errors="surrogateescape") for n in peer_nodes
+                        n.machine.decode(errors="surrogateescape") for n in peer_nodes
                     )
                     for level, peer_nodes in self.failures.items()
                 },
