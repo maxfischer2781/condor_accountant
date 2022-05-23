@@ -20,11 +20,12 @@ async def ping_nodes(
         _check_connectivity, nodes, levels=levels, timeout=timeout, ip=ip, pool=pool
     )
     failures = {}
-    async for node, connected, accepted in queries:
-        if not connected:
+    async for node, identities in queries:
+        successes = {level for level, ident in identities.items() if ident is not None}
+        if not identities:
             failures.setdefault("connect", []).append(node)
         else:
-            for level in set(levels) - accepted:
+            for level in set(levels) - successes:
                 failures.setdefault(level, []).append(node)
     return failures
 
@@ -40,19 +41,15 @@ async def _check_connectivity(
     timeout: float,
     ip: IP = IP.ANY,
     pool: Optional[bytes] = None,
-) -> "tuple[Node, bool, set[AccessLevel]]":
+) -> "tuple[Node, dict[AccessLevel, Optional[bytes]]]":
     try:
         accesses = await asyncio.wait_for(
-            _condor_ping(node.address, levels, ip=ip, pool=pool), timeout
+            _condor_ping(node.address, levels, ip=ip, pool=pool), timeout=timeout
         )
     except (ConnectionError, asyncio.TimeoutError):
-        return node, False, set()
+        return node, {}
     else:
-        return (
-            node,
-            True,
-            {level for level, identity in accesses.items() if identity is not None},
-        )
+        return node, accesses
 
 
 async def _condor_ping(
