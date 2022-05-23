@@ -1,11 +1,12 @@
 """
 Test the connectivity to other nodes in the pool which are of interest to this node
 """
-from typing import Optional
+from typing import Optional, Any
+import json
 
 from .connectivity import ping_nodes
 from ..constants import Subsystem, AccessLevel, IP
-from .._infosystem import configuration
+from .._infosystem import configuration, nodes
 from .._utility import asyncio_run
 
 # https://htcondor.readthedocs.io/en/lts/admin-manual/security.html#access-level-descriptions
@@ -41,25 +42,78 @@ async def required_peers(
     return peers
 
 
-async def test_peers(timeout: float = 8.0, config_root: Optional[bytes] = None):
+class PingPeersReport:
+    def __init__(
+        self,
+        ip: IP,
+        subsystem: Subsystem,
+        successes: "dict[AccessLevel, set[nodes.Node]]",
+        failures: "dict[str | AccessLevel, set[nodes.Node]]",
+    ):
+        self.ip = ip
+        self.subsystem = subsystem
+        self.successes = successes
+        self.failures = failures
+
+    @property
+    def human(self) -> str:
+        parts = [f"ping_peers to subsystem {self.subsystem.name} [IP{self.ip.name}]"]
+        data = self.data
+        for key, head in (("successes", "SUCCESS"), ("failures", "FAILURE")):
+            if data[key]:
+                parts.append(head)
+                parts.extend(
+                    f"{level}: {','.join(peer_nodes)}"
+                    for level, peer_nodes
+                    in data[key].items()
+                )
+        return "\n".join(parts)
+
+    @property
+    def json(self) -> str:
+        return json.dumps(self.data)
+
+    @property
+    def data(self) -> "dict[str, Any]":
+        return {
+                "test": "ping_peers",
+                "ip": self.ip.name,
+                "subsystem": self.subsystem.name,
+                "successes": {
+                    level.name: sorted(node.name for node in peer_nodes)
+                    for level, peer_nodes in self.successes.items()
+                },
+                "failures": {
+                    getattr(level, "name", level): sorted(
+                        node.name for node in peer_nodes
+                    )
+                    for level, peer_nodes in self.successes.items()
+                },
+            }
+
+
+async def test_peers(
+    timeout: float = 8.0, config_root: Optional[bytes] = None
+) -> "list[PingPeersReport]":
     """Test and report condor_ping'ing all peers of the current node"""
     peers = await required_peers(config_root)
     ip_versions = await configuration.ip_versions(config_root)
+    results = []
     for peer, levels in peers.items():
         for ip in ip_versions:
-            failures = await ping_nodes(peer, *levels, timeout=timeout, ip=ip)
-            if not failures:
-                continue
-            print("failed pings: subsystem", peer.name, f"[IP{ip.name}]")
-            for reason, nodes in failures.items():
-                print(
-                    f"failed {reason if isinstance(reason, str) else reason.name}",
-                    *(node.name.decode(errors="surrogateescape") for node in nodes),
-                )
+            successes, failures = await ping_nodes(
+                peer, *levels, timeout=timeout, ip=ip
+            )
+            results.append(PingPeersReport(
+                ip=ip, subsystem=peer, successes=successes, failures=failures
+            ))
+    return results
 
 
 def main():
-    asyncio_run(test_peers())
+    reports = asyncio_run(test_peers())
+    for report in reports:
+        print(report.human)
 
 
 if __name__ == "__main__":

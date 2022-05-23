@@ -1,4 +1,4 @@
-from typing import Collection, Optional
+from typing import Collection, Optional, TypeVar
 import asyncio
 import re
 
@@ -7,27 +7,38 @@ from .._infosystem.nodes import Node
 from .._utility import run_query, TaskPool, debug
 
 
+K = TypeVar("K")
+V = TypeVar("V")
+
+
+def _remove_empty(items: "dict[K, V]") -> "dict[K, V]":
+    return {key: value for key, value in items.items() if value}
+
+
 async def ping_nodes(
     subsystem: Subsystem,
     *levels: AccessLevel,
     timeout: Optional[float] = None,
     ip: IP = IP.ANY,
     pool: Optional[bytes] = None
-) -> "dict[str | AccessLevel, list[Node]]":
+) -> "tuple[dict[AccessLevel, set[Node]], dict[str | AccessLevel, set[Node]]]":
     """Ping all nodes of a given `subsystem` type, checking access `levels`"""
     nodes = Node.from_pool(subsystem)
     queries = TaskPool(max_size=64, throttle=1 / 128).map(
         _check_connectivity, nodes, levels=levels, timeout=timeout, ip=ip, pool=pool
     )
-    failures = {}
+    successes = {level: set() for level in levels}
+    failures = {"connect": set(), **{level: set() for level in levels}}
     async for node, identities in queries:
-        successes = {level for level, ident in identities.items() if ident is not None}
         if not identities:
-            failures.setdefault("connect", []).append(node)
+            failures["connect"].add(node)
         else:
-            for level in set(levels) - successes:
-                failures.setdefault(level, []).append(node)
-    return failures
+            for level, identity in identities.items():
+                if identity is None:
+                    failures[level].add(node)
+                else:
+                    successes[level].add(node)
+    return _remove_empty(successes), _remove_empty(failures)
 
 
 FAIL_CONNECT = b"ERROR: failed to make connection to"
